@@ -1,6 +1,6 @@
 # ⚽ Allsvenskan Tipsspel
 
-En serverless-applikation för att tippå resultat i Allsvenskan. Byggd med AWS Lambda, API Gateway, DynamoDB och EventBridge.
+En serverless-applikation för att tippa resultat i Allsvenskan. Byggd med AWS Lambda, API Gateway, DynamoDB och EventBridge.
 
 ## 🏗 Arkitektur
 
@@ -45,7 +45,7 @@ EVENTBRIDGE
 ## 🏆 Poängsystem
 
 - **3p** -- Exakt rätt resultat
-- **1p** -- Ratt utgång (1/X/2)
+- **1p** -- Rätt utgång (1/X/2)
 - **0p** -- Fel
 
 ## 🚀 Deploy
