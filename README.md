@@ -2,64 +2,70 @@
 
 En serverless-applikation för att tippa resultat i Allsvenskan. Byggd med AWS Lambda, API Gateway, DynamoDB och EventBridge.
 
-## 🏗️ Arkitektur
+## 🏗 Arkitektur
 
+```
 FRONTEND (React Native / Expo)
-         |
-         ▼
-API GATEWAY (Säkrad med API-key)
-├── GET /matches ──────► getMatches (Lambda) ──────► DynamoDB (MatchesTable)
-├── GET /predictions ──► getPredictions (Lambda) ──► DynamoDB (PredictionsTable)
-└── POST /predictions ─► createPrediction (Lambda) ► DynamoDB (PredictionsTable)
+        |
+        v
+API GATEWAY (Sakrad med API-key)
+|-- GET /matches ----------> getMatches (Lambda) ------> DynamoDB (MatchesTable)
+|-- GET /predictions ------> getPredictions (Lambda) --> DynamoDB (PredictionsTable)
+|-- POST /predictions -----> createPrediction (Lambda) > DynamoDB (PredictionsTable)
 
 EVENTBRIDGE
-├── fetchMatches (Lambda) ─────► Hämtar data från API ──► DynamoDB (MatchesTable)
-├── calculateScores (Lambda) ──► Läser båda tabeller ───► Uppdaterar PredictionsTable
-└── logPrediction (Lambda) ────► Loggar varje nytt tips (triggad av event)
+|-- fetchMatches (Lambda) -----> Hamtar data fran API --> DynamoDB (MatchesTable)
+|-- calculateScores (Lambda) --> Laser bada tabeller ---> Uppdaterar PredictionsTable
+|-- logPrediction (Lambda) ----> Loggar varje nytt tips (triggad av event)
+```
 
-## 🛠️ Tech Stack
+## 🛠 Tech Stack
 
 - **Backend:** Node.js, TypeScript, Serverless Framework
 - **Moln:** AWS Lambda, API Gateway, DynamoDB, EventBridge
 - **Frontend:** React Native med Expo
 - **Data:** Allsvenskan API (api-football)
 
-## 📡 API Endpoints
+## 🔌 API Endpoints
 
 | Metod | Endpoint | Beskrivning | Auth |
 |-------|----------|-------------|------|
-| GET | /matches | Hämta alla matcher | API-key |
-| GET | /predictions | Hämta alla tips | API-key |
-| POST | /predictions | Skapa nytt tips | API-key |
+| GET | /matches | Hamta alla matcher | API-key |
+| GET | /predictions | Hamta anvandarens tips | API-key |
+| POST | /predictions | Skicka in ett tips | API-key |
 
 ## ⚡ Event-driven funktioner
 
 | Funktion | Trigger | Beskrivning |
 |----------|---------|-------------|
-| fetchMatches | EventBridge (schema) | Hämtar matchdata från extern API och sparar i DynamoDB |
-| calculateScores | EventBridge (schema) | Beräknar poäng för alla tips baserat på faktiska resultat |
-| logPrediction | EventBridge (event) | Loggar varje nytt tips som skapas |
+| fetchMatches | EventBridge (schema) | Hamtar matchdata fran extern API och sparar i DynamoDB |
+| calculateScores | EventBridge (schema) | Beraknar poang for alla tips baserat pa faktiska resultat |
+| logPrediction | EventBridge (event) | Loggar varje tips som skapas |
 
-## 🏆 Poängsystem
+## 🏆 Poangsystem
 
-- **3p** – Exakt rätt resultat
-- **1p** – Rätt utgång (1/X/2)
-- **0p** – Fel
+- **3p** -- Exakt ratt resultat
+- **1p** -- Ratt utgang (1/X/2)
+- **0p** -- Fel
 
 ## 🚀 Deploy
 
-cd backend
+```bash
 npm install
 npx serverless deploy
+```
 
-## 🖥️ Frontend
+## 💻 Frontend
 
+```bash
 cd frontend
 npm install
 npx expo start
+```
 
 ## 📁 Projektstruktur
 
+```
 allsvenskan-predictor/
 ├── src/
 │   ├── handlers/
@@ -72,8 +78,8 @@ allsvenskan-predictor/
 │   │   └── logPrediction.ts
 │   ├── types/
 │   │   └── index.ts
-│   ├── utils/
-│   │   └── dynamodb.ts
+│   └── utils/
+│       └── dynamodb.ts
 ├── frontend/
 │   ├── app/
 │   │   └── (tabs)/
@@ -84,3 +90,4 @@ allsvenskan-predictor/
 ├── serverless.yml
 ├── package.json
 └── README.md
+```
