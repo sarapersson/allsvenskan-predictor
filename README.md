@@ -1,6 +1,6 @@
 # ⚽ Allsvenskan Tipsspel
 
-En serverless-applikation för att tippa resultat i Allsvenskan. Byggd med AWS Lambda, API Gateway, DynamoDB och EventBridge.
+En serverless-applikation för att tippå resultat i Allsvenskan. Byggd med AWS Lambda, API Gateway, DynamoDB och EventBridge.
 
 ## 🏗 Arkitektur
 
@@ -8,14 +8,14 @@ En serverless-applikation för att tippa resultat i Allsvenskan. Byggd med AWS L
 FRONTEND (React Native / Expo)
         |
         v
-API GATEWAY (Sakrad med API-key)
+API GATEWAY (Säkrad med API-key)
 |-- GET /matches ----------> getMatches (Lambda) ------> DynamoDB (MatchesTable)
 |-- GET /predictions ------> getPredictions (Lambda) --> DynamoDB (PredictionsTable)
 |-- POST /predictions -----> createPrediction (Lambda) > DynamoDB (PredictionsTable)
 
 EVENTBRIDGE
-|-- fetchMatches (Lambda) -----> Hamtar data fran API --> DynamoDB (MatchesTable)
-|-- calculateScores (Lambda) --> Laser bada tabeller ---> Uppdaterar PredictionsTable
+|-- fetchMatches (Lambda) -----> Hämtar data från API --> DynamoDB (MatchesTable)
+|-- calculateScores (Lambda) --> Läser båda tabeller ---> Uppdaterar PredictionsTable
 |-- logPrediction (Lambda) ----> Loggar varje nytt tips (triggad av event)
 ```
 
@@ -30,22 +30,22 @@ EVENTBRIDGE
 
 | Metod | Endpoint | Beskrivning | Auth |
 |-------|----------|-------------|------|
-| GET | /matches | Hamta alla matcher | API-key |
-| GET | /predictions | Hamta anvandarens tips | API-key |
+| GET | /matches | Hämta alla matcher | API-key |
+| GET | /predictions | Hämta användarens tips | API-key |
 | POST | /predictions | Skicka in ett tips | API-key |
 
 ## ⚡ Event-driven funktioner
 
 | Funktion | Trigger | Beskrivning |
 |----------|---------|-------------|
-| fetchMatches | EventBridge (schema) | Hamtar matchdata fran extern API och sparar i DynamoDB |
-| calculateScores | EventBridge (schema) | Beraknar poang for alla tips baserat pa faktiska resultat |
+| fetchMatches | EventBridge (schema) | Hämtar matchdata från extern API och sparar i DynamoDB |
+| calculateScores | EventBridge (schema) | Beräknar poäng för alla tips baserat på faktiska resultat |
 | logPrediction | EventBridge (event) | Loggar varje tips som skapas |
 
-## 🏆 Poangsystem
+## 🏆 Poängsystem
 
-- **3p** -- Exakt ratt resultat
-- **1p** -- Ratt utgang (1/X/2)
+- **3p** -- Exakt rätt resultat
+- **1p** -- Ratt utgång (1/X/2)
 - **0p** -- Fel
 
 ## 🚀 Deploy
