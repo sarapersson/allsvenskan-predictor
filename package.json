@@ -1,0 +1,22 @@
+{
+  "name": "allsvenskan-predictor",
+  "version": "1.0.0",
+  "description": "Allsvenskan match predictor API",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.161",
+    "@types/node": "^25.6.0",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1040.0",
+    "@aws-sdk/client-eventbridge": "^3.1040.0",
+    "@aws-sdk/lib-dynamodb": "^3.1040.0"
+  }
+}

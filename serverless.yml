@@ -1,0 +1,131 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: sarapersson
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: allsvenskan-predictor
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  region: eu-north-1
+  stage: dev
+  httpApi:
+    cors:
+      allowedOrigins:
+        - "*"
+      allowedHeaders:
+        - Content-Type
+        - x-api-key
+      allowedMethods:
+        - GET
+        - POST
+        - OPTIONS
+    authorizers:
+      apiKeyAuthorizer:
+        type: request
+        functionName: authorizer
+        enableSimpleResponses: true
+        payloadVersion: "2.0"
+        identitySource: $request.header.x-api-key
+  environment:
+    MATCHES_TABLE: ${self:service}-matches-${self:provider.stage}
+    PREDICTIONS_TABLE: ${self:service}-predictions-${self:provider.stage}
+    API_KEY: ${self:custom.apiKey}
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:Query
+            - dynamodb:UpdateItem
+          Resource:
+            - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.MATCHES_TABLE}
+            - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PREDICTIONS_TABLE}
+        - Effect: Allow
+          Action:
+            - events:PutEvents
+          Resource: "*"
+
+custom:
+  apiKey: ${ssm:/allsvenskan-predictor/dev/api-key}
+
+functions:
+  authorizer:
+    handler: src/handlers/authorizer.handler
+
+  getMatches:
+    handler: src/handlers/getMatches.handler
+    events:
+      - httpApi:
+          path: /matches
+          method: get
+          authorizer:
+            name: apiKeyAuthorizer
+
+  createPrediction:
+    handler: src/handlers/createPrediction.handler
+    events:
+      - httpApi:
+          path: /predictions
+          method: post
+          authorizer:
+            name: apiKeyAuthorizer
+
+  getPredictions:
+    handler: src/handlers/getPredictions.handler
+    events:
+      - httpApi:
+          path: /predictions
+          method: get
+          authorizer:
+            name: apiKeyAuthorizer
+
+  fetchMatches:
+    handler: src/handlers/fetchMatches.handler
+    events:
+      - schedule: rate(1 day)
+
+  calculateScores:
+    handler: src/handlers/calculateScores.handler
+    events:
+      - schedule: rate(1 hour)
+
+  logPrediction:
+    handler: src/handlers/logPrediction.handler
+    events:
+      - eventBridge:
+          eventBus: allsvenskan-prediction-bus
+          pattern:
+            source:
+              - "allsvenskan.predictions"
+            detail-type:
+              - "PredictionCreated"
+
+resources:
+  Resources:
+    MatchesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.MATCHES_TABLE}
+        AttributeDefinitions:
+          - AttributeName: matchId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: matchId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    PredictionsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.PREDICTIONS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: predictionId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: predictionId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
