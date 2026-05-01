@@ -1,50 +1,103 @@
-# Welcome to your Expo app 👋
+# Allsvenskan Predictor - Frontend 📱
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+React Native-app byggd med Expo för att tippa Allsvenskan-matcher.
 
-## Get started
+## Tech Stack
 
-1. Install dependencies
+- Framework: React Native med Expo
+- Routing: Expo Router (file-based)
+- Language: TypeScript
+- Backend: AWS Lambda + API Gateway + DynamoDB
 
-   ```bash
-   npm install
-   ```
+## Kom igång
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+### 1. Installera dependencies
 
 ```bash
-npm run reset-project
+cd frontend
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Konfigurera miljövariabler
 
-## Learn more
+Skapa en .env-fil i frontend/-mappen:
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+EXPO_PUBLIC_API_URL=https://din-api-gateway-url.amazonaws.com
+EXPO_PUBLIC_API_KEY=din-api-nyckel
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### 3. Starta appen
 
-## Join the community
+```bash
+npx expo start
+```
 
-Join our community of developers creating universal apps.
+Tangenter:
+- a = Android emulator
+- i = iOS simulator
+- w = Webbläsare
+Eller scanna QR-koden med Expo Go på din telefon.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Projektstruktur
+
+```
+frontend/
+├── app/
+│   ├── (tabs)/
+│   │   ├── _layout.tsx      Layout för tabs
+│   │   ├── index.tsx        Hemskärm - matcher
+│   │   └── explore.tsx      Utforska
+│   ├── _layout.tsx          Root layout med navigation
+│   └── modal.tsx            Modal-vy
+├── assets/images/           Bilder och ikoner
+├── components/              Återanvändbara UI-komponenter
+├── constants/               Färger, config, etc.
+├── hooks/                   Custom React hooks
+├── scripts/                 Hjälpskript
+├── services/
+│   └── api.ts              API-anrop mot backend
+├── .env                     Miljövariabler (INTE i git)
+├── app.json                 Expo-konfiguration
+├── tsconfig.json            TypeScript-konfiguration
+└── package.json             Dependencies och scripts
+```
+
+## Scripts
+
+```bash
+npx expo start            # Starta dev-server
+npx expo start --clear    # Starta med rensad cache
+npm run lint              # Kör ESLint
+npm run reset-project     # Rensa starterkod och börja om
+```
+
+## API-integration
+All kommunikation med backend sker via services/api.ts:
+`GET /matches` - Hämta alla matcher
+`GET /predictions` - Hämta alla tips
+`POST /predictions` - Skapa nytt tips
+Alla requests kräver headern x-api-key.
+
+## Köra på fysisk enhet
+
+1. Installera Expo Go på din telefon
+2. Se till att telefon och dator är på samma WiFi-nätverk
+3. Scanna QR-koden som visas i terminalen
+
+## Bygga för produktion
+```bash
+npm install -g eas-cli
+eas login
+eas build --platform android
+eas build --platform ios
+```
+
+## Felsökning
+
+- "Network request failed" - Kolla att EXPO_PUBLIC_API_URL är korrekt i .env
+- "Unauthorized" - Kolla att EXPO_PUBLIC_API_KEY matchar backend
+- Metro bundler hänger - Kör npx expo start --clear
+- Expo Go hittar inte servern - Se till att telefon/dator är på samma WiFi
+- TypeScript-fel efter ändring - Starta om TS server i VS Code (Cmd+Shift+P)
+

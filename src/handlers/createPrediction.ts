@@ -1,3 +1,19 @@
+/**
+ * createPrediction - Skapar ett nytt tips för en match
+ *
+ * Denna Lambda triggas av POST /predictions via API Gateway.
+ * Den validerar input, sparar tipset i DynamoDB och skickar
+ * ett event till EventBridge så att andra tjänster (t.ex. logPrediction)
+ * kan reagera på det nya tipset.
+ *
+ * Förväntat request body:
+ * {
+ *   "matchId": "abc123",
+ *   "predictedHome": 2,
+ *   "predictedAway": 1
+ * }
+ */
+
 import { docClient } from "../utils/dynamodb";
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
 import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge";
@@ -5,17 +21,32 @@ import { randomUUID } from "crypto";
 
 const eventBridge = new EventBridgeClient({});
 
+// CORS-headers som krävs för frontend-anrop
 const headers = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type, x-api-key",
 };
 
 export const handler = async (event: any) => {
-  console.log("🔄 createPrediction called");
+  console.log("🔄 createPrediction called", {
+    path: event.rawPath || "unknown",
+    method: event.requestContext?.http?.method || "unknown",
+  });
+
+  // Validera att miljövariabler finns
+  if (!process.env.PREDICTIONS_TABLE) {
+    console.error("❌ Missing environment variable: PREDICTIONS_TABLE");
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ message: "Server configuration error" }),
+    };
+  }
 
   try {
+    // --- Steg 1: Validera att request body finns ---
     if (!event.body) {
-      console.warn("⚠️ No request body provided");
+      console.warn("⚠️ Denied: No request body provided");
       return {
         statusCode: 400,
         headers,
@@ -23,11 +54,23 @@ export const handler = async (event: any) => {
       };
     }
 
-    const body = JSON.parse(event.body);
+    // --- Steg 2: Parsa och validera fälten ---
+    let body: any;
+    try {
+      body = JSON.parse(event.body);
+    } catch (parseError) {
+      console.warn("⚠️ Denied: Invalid JSON in request body");
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ message: "Invalid JSON in request body" }),
+      };
+    }
+
     const { matchId, predictedHome, predictedAway } = body;
 
     if (!matchId || predictedHome === undefined || predictedAway === undefined) {
-      console.warn("⚠️ Missing required fields:", { matchId, predictedHome, predictedAway });
+      console.warn("⚠️ Denied: Missing required fields", { matchId, predictedHome, predictedAway });
       return {
         statusCode: 400,
         headers,
@@ -37,11 +80,29 @@ export const handler = async (event: any) => {
       };
     }
 
+    // Validera att poängen är rimliga tal
+    if (
+      !Number.isInteger(predictedHome) || !Number.isInteger(predictedAway) ||
+      predictedHome < 0 || predictedAway < 0 ||
+      predictedHome > 99 || predictedAway > 99
+    ) {
+      console.warn("⚠️ Denied: Invalid score values", { predictedHome, predictedAway });
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          message: "predictedHome and predictedAway must be integers between 0-99",
+        }),
+      };
+    }
+
+    // --- Steg 3: Skapa och spara tipset i DynamoDB ---
     const prediction = {
       predictionId: randomUUID(),
       matchId,
       predictedHome,
       predictedAway,
+      scored: false,
       createdAt: new Date().toISOString(),
     };
 
@@ -52,23 +113,30 @@ export const handler = async (event: any) => {
       })
     );
 
-    console.log(`📝 Prediction saved: ${prediction.predictionId}`);
+    console.log(`📝 Prediction saved: ${prediction.predictionId} (match: ${matchId}, tip: ${predictedHome}-${predictedAway})`);
 
-    await eventBridge.send(
-      new PutEventsCommand({
-        Entries: [
-          {
-            Source: "allsvenskan.predictions",
-            DetailType: "PredictionCreated",
-            EventBusName: "allsvenskan-prediction-bus",
-            Detail: JSON.stringify(prediction),
-          },
-        ],
-      })
-    );
+    // --- Steg 4: Skicka event till EventBridge ---
+    try {
+      await eventBridge.send(
+        new PutEventsCommand({
+          Entries: [
+            {
+              Source: "allsvenskan.predictions",
+              DetailType: "PredictionCreated",
+              EventBusName: "allsvenskan-prediction-bus",
+              Detail: JSON.stringify(prediction),
+            },
+          ],
+        })
+      );
 
-    console.log(`✅ EventBridge event sent for prediction ${prediction.predictionId}`);
+      console.log(`📣 EventBridge event sent: PredictionCreated`);
+    } catch (eventError) {
+      // EventBridge-fel ska INTE hindra responsen – tipset är redan sparat
+      console.error("⚠️ EventBridge send failed (prediction still saved):", eventError);
+    }
 
+    // --- Steg 5: Returnera framgångsrikt svar ---
     return {
       statusCode: 201,
       headers,

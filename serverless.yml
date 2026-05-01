@@ -1,3 +1,13 @@
+# ==============================================================
+# Allsvenskan Predictor - Serverless Framework Configuration
+#
+# Infrastruktur och deployment-konfiguration för hela projektet.
+# Deployar till AWS med DynamoDB, Lambda, API Gateway, EventBridge.
+#
+# Deploy: npx serverless deploy
+# Remove: npx serverless remove
+# ==============================================================
+
 # "org" ensures this Service is used with the correct Serverless Framework Access Key.
 org: sarapersson
 # "service" is the name of this project. This will also be added to your AWS resource names.
@@ -7,7 +17,10 @@ provider:
   name: aws
   runtime: nodejs22.x
   region: eu-north-1
-  stage: dev
+  stage: ${opt:stage, 'dev'}  # Kan overridas med --stage prod
+  timeout: 30                  # Default timeout för alla Lambdas (sekunder)
+  memorySize: 256              # Default minne för alla Lambdas (MB)
+
   httpApi:
     cors:
       allowedOrigins:
@@ -26,6 +39,7 @@ provider:
         enableSimpleResponses: true
         payloadVersion: "2.0"
         identitySource: $request.header.x-api-key
+
   environment:
     MATCHES_TABLE: ${self:service}-matches-${self:provider.stage}
     PREDICTIONS_TABLE: ${self:service}-predictions-${self:provider.stage}
@@ -34,9 +48,11 @@ provider:
   iam:
     role:
       statements:
+        # DynamoDB-åtkomst (båda tabellerna)
         - Effect: Allow
           Action:
             - dynamodb:PutItem
+            - dynamodb:BatchWriteItem
             - dynamodb:Scan
             - dynamodb:GetItem
             - dynamodb:Query
@@ -44,18 +60,26 @@ provider:
           Resource:
             - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.MATCHES_TABLE}
             - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PREDICTIONS_TABLE}
+        # EventBridge-åtkomst (begränsad till vår bus)
         - Effect: Allow
           Action:
             - events:PutEvents
-          Resource: "*"
+          Resource:
+            - arn:aws:events:${self:provider.region}:*:event-bus/allsvenskan-prediction-bus
 
 custom:
-  apiKey: ${ssm:/allsvenskan-predictor/dev/api-key}
+  apiKey: ${ssm:/allsvenskan-predictor/${self:provider.stage}/api-key}
+
+# ==============================================================
+# Functions
+# ==============================================================
 
 functions:
+  # --- Auth ---
   authorizer:
     handler: src/handlers/authorizer.handler
 
+  # --- API Endpoints ---
   getMatches:
     handler: src/handlers/getMatches.handler
     events:
@@ -83,16 +107,25 @@ functions:
           authorizer:
             name: apiKeyAuthorizer
 
+  # --- Scheduled Jobs ---
   fetchMatches:
     handler: src/handlers/fetchMatches.handler
+    timeout: 60  # Behöver mer tid - hämtar 30 omgångar från externt API
     events:
-      - schedule: rate(1 day)
+      - schedule:
+          rate: rate(1 day)
+          enabled: true
+          description: "Fetch latest match data from TheSportsDB"
 
   calculateScores:
     handler: src/handlers/calculateScores.handler
     events:
-      - schedule: rate(1 hour)
+      - schedule:
+          rate: rate(1 hour)
+          enabled: true
+          description: "Calculate points for unscored predictions"
 
+  # --- Event-driven ---
   logPrediction:
     handler: src/handlers/logPrediction.handler
     events:
@@ -104,8 +137,13 @@ functions:
             detail-type:
               - "PredictionCreated"
 
+# ==============================================================
+# Resources (CloudFormation)
+# ==============================================================
+
 resources:
   Resources:
+    # DynamoDB-tabell för matcher
     MatchesTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -118,6 +156,7 @@ resources:
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
 
+    # DynamoDB-tabell för tips
     PredictionsTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -129,3 +168,9 @@ resources:
           - AttributeName: predictionId
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
+
+    # EventBridge-bus för prediction-events
+    PredictionEventBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        Name: allsvenskan-prediction-bus
