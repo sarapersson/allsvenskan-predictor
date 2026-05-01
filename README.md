@@ -1,0 +1,86 @@
+# ⚽ Allsvenskan Tipsspel
+
+En serverless-applikation för att tippa resultat i Allsvenskan. Byggd med AWS Lambda, API Gateway, DynamoDB och EventBridge.
+
+## 🏗️ Arkitektur
+
+FRONTEND (React Native / Expo)
+         |
+         ▼
+API GATEWAY (Säkrad med API-key)
+├── GET /matches ──────► getMatches (Lambda) ──────► DynamoDB (MatchesTable)
+├── GET /predictions ──► getPredictions (Lambda) ──► DynamoDB (PredictionsTable)
+└── POST /predictions ─► createPrediction (Lambda) ► DynamoDB (PredictionsTable)
+
+EVENTBRIDGE
+├── fetchMatches (Lambda) ─────► Hämtar data från API ──► DynamoDB (MatchesTable)
+├── calculateScores (Lambda) ──► Läser båda tabeller ───► Uppdaterar PredictionsTable
+└── logPrediction (Lambda) ────► Loggar varje nytt tips (triggad av event)
+
+## 🛠️ Tech Stack
+
+- **Backend:** Node.js, TypeScript, Serverless Framework
+- **Moln:** AWS Lambda, API Gateway, DynamoDB, EventBridge
+- **Frontend:** React Native med Expo
+- **Data:** Allsvenskan API (api-football)
+
+## 📡 API Endpoints
+
+| Metod | Endpoint | Beskrivning | Auth |
+|-------|----------|-------------|------|
+| GET | /matches | Hämta alla matcher | API-key |
+| GET | /predictions | Hämta alla tips | API-key |
+| POST | /predictions | Skapa nytt tips | API-key |
+
+## ⚡ Event-driven funktioner
+
+| Funktion | Trigger | Beskrivning |
+|----------|---------|-------------|
+| fetchMatches | EventBridge (schema) | Hämtar matchdata från extern API och sparar i DynamoDB |
+| calculateScores | EventBridge (schema) | Beräknar poäng för alla tips baserat på faktiska resultat |
+| logPrediction | EventBridge (event) | Loggar varje nytt tips som skapas |
+
+## 🏆 Poängsystem
+
+- **3p** – Exakt rätt resultat
+- **1p** – Rätt utgång (1/X/2)
+- **0p** – Fel
+
+## 🚀 Deploy
+
+cd backend
+npm install
+npx serverless deploy
+
+## 🖥️ Frontend
+
+cd frontend
+npm install
+npx expo start
+
+## 📁 Projektstruktur
+
+allsvenskan-predictor/
+├── src/
+│   ├── handlers/
+│   │   ├── authorizer.ts
+│   │   ├── calculateScores.ts
+│   │   ├── createPrediction.ts
+│   │   ├── fetchMatches.ts
+│   │   ├── getMatches.ts
+│   │   ├── getPredictions.ts
+│   │   └── logPrediction.ts
+│   ├── types/
+│   │   └── index.ts
+│   ├── utils/
+│   │   └── dynamodb.ts
+├── frontend/
+│   ├── app/
+│   │   └── (tabs)/
+│   │       └── index.tsx
+│   ├── services/
+│   │   └── api.ts
+│   └── package.json
+├── serverless.yml
+├── package.json
+└── README.md
