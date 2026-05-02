@@ -25,7 +25,7 @@
 - [x] Increase `fetchMatches` timeout to 90s
 - [x] Refactor `frontend/app/(tabs)/index.tsx` into smaller components
 - [x] Replace O(n²) prediction lookup with a Map/useMemo
-- [ ] Use theme constants instead of hardcoded colors in frontend
+- [x] Use theme constants instead of hardcoded colors in frontend
 
 ## Low Priority
 

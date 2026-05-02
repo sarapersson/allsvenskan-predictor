@@ -12,6 +12,7 @@
 
 import { View, Text, TextInput, Pressable, StyleSheet } from "react-native";
 import { Match, Prediction } from "../types";
+import { AppColors } from "../constants/theme";
 import React from "react";
 
 interface MatchCardProps {
@@ -87,20 +88,20 @@ export default React.memo(MatchCard);
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: AppColors.card,
     padding: 16,
     borderRadius: 8,
     marginBottom: 12,
     elevation: 2,
   },
-  round: { fontSize: 12, color: "#666" },
+  round: { fontSize: 12, color: AppColors.textSecondary },
   teams: { fontSize: 18, fontWeight: "bold", marginVertical: 4 },
-  result: { fontSize: 14, color: "#333", marginTop: 4 },
-  prediction: { fontSize: 14, color: "#2e7d32", marginTop: 4, fontWeight: "600" },
+  result: { fontSize: 14, color: AppColors.text, marginTop: 4 },
+  prediction: { fontSize: 14, color: AppColors.success, marginTop: 4, fontWeight: "600" },
   inputRow: { flexDirection: "row", alignItems: "center", marginTop: 8 },
   input: {
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: AppColors.border,
     borderRadius: 4,
     width: 40,
     textAlign: "center",
@@ -108,12 +109,12 @@ const styles = StyleSheet.create({
   },
   dash: { marginHorizontal: 8, fontSize: 18 },
   button: {
-    backgroundColor: "#1a73e8",
+    backgroundColor: AppColors.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 4,
     marginLeft: 12,
   },
-  buttonDisabled: { backgroundColor: "#93b8f0" },
+  buttonDisabled: { backgroundColor: AppColors.primaryDisabled },
   buttonText: { color: "#fff", fontWeight: "bold" },
 });

@@ -19,6 +19,7 @@ import {
 } from "react-native";
 import { getMatches, getPredictions, createPrediction } from "../../services/api";
 import { Match, Prediction } from "../../types";
+import { AppColors } from "../../constants/theme";
 import MatchCard from "../../components/match-card";
 import ScoreSummary from "../../components/score-summary";
 
@@ -145,7 +146,7 @@ export default function Home() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#1a73e8" />
+        <ActivityIndicator size="large" color={AppColors.primary} />
         <Text style={styles.loadingText}>Laddar matcher...</Text>
       </View>
     );
@@ -206,11 +207,11 @@ export default function Home() {
 
 // --- Styles ---
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: "#f5f5f5" },
+  container: { flex: 1, padding: 16, backgroundColor: AppColors.background },
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
-  loadingText: { marginTop: 12, fontSize: 16, color: "#666" },
+  loadingText: { marginTop: 12, fontSize: 16, color: AppColors.textSecondary },
   errorBanner: {
-    backgroundColor: "#fdecea",
+    backgroundColor: AppColors.errorBackground,
     padding: 12,
     borderRadius: 8,
     marginBottom: 12,
@@ -218,18 +219,18 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  errorText: { color: "#d32f2f", fontSize: 14, flex: 1 },
-  retryText: { color: "#1a73e8", fontWeight: "bold", marginLeft: 12 },
+  errorText: { color: AppColors.error, fontSize: 14, flex: 1 },
+  retryText: { color: AppColors.primary, fontWeight: "bold", marginLeft: 12 },
   tabRow: { flexDirection: "row", marginBottom: 16 },
   tab: {
     flex: 1,
     paddingVertical: 12,
     alignItems: "center",
     borderBottomWidth: 2,
-    borderBottomColor: "#ddd",
+    borderBottomColor: AppColors.border,
   },
-  tabActive: { borderBottomColor: "#1a73e8" },
-  tabText: { fontSize: 16, color: "#666" },
-  tabTextActive: { color: "#1a73e8", fontWeight: "bold" },
-  emptyText: { textAlign: "center", color: "#666", marginTop: 32, fontSize: 16 },
+  tabActive: { borderBottomColor: AppColors.primary },
+  tabText: { fontSize: 16, color: AppColors.textSecondary },
+  tabTextActive: { color: AppColors.primary, fontWeight: "bold" },
+  emptyText: { textAlign: "center", color: AppColors.textSecondary, marginTop: 32, fontSize: 16 },
 });

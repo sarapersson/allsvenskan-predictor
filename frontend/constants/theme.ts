@@ -1,6 +1,8 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * constants/theme.ts - Färger och designkonstanter
+ *
+ * Centraliserade färger som används i hela appen.
+ * Gör det enkelt att ändra utseende utan att söka i varje komponent.
  */
 
 import { Platform } from 'react-native';
@@ -25,6 +27,20 @@ export const Colors = {
     tabIconDefault: '#9BA1A6',
     tabIconSelected: tintColorDark,
   },
+};
+
+/** App-specifika färger */
+export const AppColors = {
+  primary: '#1a73e8',
+  primaryDisabled: '#93b8f0',
+  background: '#f5f5f5',
+  card: '#fff',
+  text: '#333',
+  textSecondary: '#666',
+  border: '#ddd',
+  error: '#d32f2f',
+  errorBackground: '#fdecea',
+  success: '#2e7d32',
 };
 
 export const Fonts = Platform.select({
