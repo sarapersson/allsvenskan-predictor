@@ -10,9 +10,9 @@
 ## High Priority
 
 - [x] Add duplicate prediction prevention in `createPrediction.ts` (conditional write)
-- [ ] Add retry logic with exponential backoff in `fetchMatches.ts`
-- [ ] Handle unprocessed batch items in `fetchMatches.ts`
-- [ ] Guard against `NaN` from `parseInt` in `fetchMatches.ts`
+- [x] Add retry logic with exponential backoff in `fetchMatches.ts`
+- [x] Handle unprocessed batch items in `fetchMatches.ts`
+- [x] Guard against `NaN` from `parseInt` in `fetchMatches.ts`
 - [ ] Add request timeout (AbortController) in `frontend/services/api.ts`
 - [ ] Fix IAM ARNs to use `${aws:accountId}` instead of wildcard
 
