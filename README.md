@@ -57,10 +57,37 @@ npm install
 npx serverless deploy
 ```
 
+### Efter deploy
+
+1. **Skapa API-nyckel i SSM** (första gången):
+   ```bash
+   aws ssm put-parameter \
+     --name "/allsvenskan-predictor/dev/api-key" \
+     --value "$(openssl rand -hex 16)" \
+     --type SecureString \
+     --region eu-north-1
+   ```
+
+2. **Prenumerera på larm** (e-post vid fel):
+   ```bash
+   aws sns subscribe \
+     --topic-arn arn:aws:sns:eu-north-1:<ACCOUNT_ID>:allsvenskan-predictor-alarms-dev \
+     --protocol email \
+     --notification-endpoint din@email.com \
+     --region eu-north-1
+   ```
+
+3. **Seed matchdata** (hämtar alla 30 omgångar för Allsvenskan 2026 från TheSportsDB till DynamoDB):
+   ```bash
+   npx serverless invoke -f fetchMatches
+   ```
+   Detta körs sedan automatiskt en gång per dag via EventBridge för att hålla resultat uppdaterade.
+
 ## 💻 Frontend
 
 ```bash
 cd frontend
+cp .env.example .env   # Fyll i API-URL och nyckel
 npm install
 npx expo start
 ```
