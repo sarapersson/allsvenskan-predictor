@@ -69,7 +69,6 @@ frontend/
 npx expo start            # Starta dev-server
 npx expo start --clear    # Starta med rensad cache
 npm run lint              # Kör ESLint
-npm run reset-project     # Rensa starterkod och börja om
 ```
 
 ## API-integration
