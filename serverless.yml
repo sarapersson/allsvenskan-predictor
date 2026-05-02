@@ -45,7 +45,6 @@ provider:
   environment:
     MATCHES_TABLE: ${self:service}-matches-${self:provider.stage}
     PREDICTIONS_TABLE: ${self:service}-predictions-${self:provider.stage}
-    API_KEY: ${self:custom.apiKey}
 
   iam:
     role:
@@ -88,6 +87,8 @@ functions:
   # --- Auth ---
   authorizer:
     handler: src/handlers/authorizer.handler
+    environment:
+      API_KEY: ${self:custom.apiKey}
 
   # --- API Endpoints ---
   getMatches:
