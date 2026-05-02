@@ -123,7 +123,6 @@ functions:
   fetchMatches:
     handler: src/handlers/fetchMatches.handler
     timeout: 90  # Behöver mer tid - hämtar 30 omgångar från externt API med retries
-    reservedConcurrency: 1  # Förhindra parallella körningar som kan orsaka dubbletter
     events:
       - schedule:
           rate: rate(2 hours)
@@ -140,7 +139,6 @@ functions:
 
   calculateScores:
     handler: src/handlers/calculateScores.handler
-    reservedConcurrency: 1  # Förhindra parallella körningar som kan orsaka dubbletter
     events:
       - eventBridge:
           eventBus: allsvenskan-prediction-bus
