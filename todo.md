@@ -1,5 +1,24 @@
 # Allsvenskan Predictor - TODO
 
+## Round 3 (completed)
+
+### Bugs
+
+- [x] Fix race condition in duplicate prediction prevention (atomic ConditionExpression)
+- [x] Fix race condition in calculateScores (concurrent scoring of same prediction)
+
+### Config
+
+- [x] Move hardcoded EventBridge bus name to environment variable
+- [ ] ~~Move hardcoded season/league constants to environment variables~~ (skipped, tackle next year)
+
+### Nice-to-haves
+
+- [x] Cap frontend score input to max 99 (matches backend validation)
+- [x] Remove unused Expo boilerplate (reset-project.js, template images)
+
+---
+
 ## Round 2 (completed)
 
 ### Security
