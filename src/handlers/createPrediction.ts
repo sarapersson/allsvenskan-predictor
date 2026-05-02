@@ -169,7 +169,7 @@ export const handler = async (event: any) => {
     return {
       statusCode: 201,
       headers,
-      body: JSON.stringify({ message: "Prediction created", prediction }),
+      body: JSON.stringify(prediction),
     };
   } catch (error) {
     console.error("❌ createPrediction failed:", error);
