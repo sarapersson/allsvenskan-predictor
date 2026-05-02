@@ -62,6 +62,7 @@ provider:
           Resource:
             - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.MATCHES_TABLE}
             - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PREDICTIONS_TABLE}
+            - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PREDICTIONS_TABLE}/index/*
         # EventBridge-åtkomst (begränsad till vår bus)
         - Effect: Allow
           Action:
@@ -166,7 +167,16 @@ resources:
         AttributeDefinitions:
           - AttributeName: predictionId
             AttributeType: S
+          - AttributeName: matchId
+            AttributeType: S
         KeySchema:
           - AttributeName: predictionId
             KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: matchId-index
+            KeySchema:
+              - AttributeName: matchId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
         BillingMode: PAY_PER_REQUEST
