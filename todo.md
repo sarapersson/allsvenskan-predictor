@@ -19,7 +19,7 @@
 ## Medium Priority
 
 - [x] Add GSI on `PredictionsTable` for `matchId` (avoid scan in calculateScores)
-- [ ] Add GSI on `MatchesTable` for date/round (avoid scan in getMatches)
+- [x] Add GSI on `MatchesTable` for date/round (avoid scan in getMatches)
 - [x] Enable Point-in-Time Recovery on DynamoDB tables
 - [x] Add DLQ for `logPrediction` Lambda
 - [x] Increase `fetchMatches` timeout to 90s
@@ -31,9 +31,9 @@
 
 - [x] Remove unused boilerplate (`explore.tsx`, `modal.tsx`)
 - [x] Add `build` script to root `package.json`
-- [ ] Add shared types package (avoid type drift between frontend/backend)
+- [x] Add shared types package (avoid type drift between frontend/backend)
 - [x] Add CloudWatch alarms for Lambda errors
 - [x] Make `calculateScores` event-driven instead of hourly schedule
-- [ ] Add basic test framework and unit tests
+- [x] Add basic test framework and unit tests
 - [x] Add `.env.example` files for developer onboarding
 - [x] Add Lambda concurrency limits
