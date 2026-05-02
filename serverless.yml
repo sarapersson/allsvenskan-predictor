@@ -24,7 +24,9 @@ provider:
   httpApi:
     cors:
       allowedOrigins:
-        - "*"
+        - "http://localhost:8081"
+        - "http://localhost:19006"
+        # TODO: Add production domain when deploying web build
       allowedHeaders:
         - Content-Type
         - x-api-key

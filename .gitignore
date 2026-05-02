@@ -1,2 +1,15 @@
-node_modules
+# dependencies
+node_modules/
+
+# Serverless
 .serverless
+
+# macOS
+.DS_Store
+
+# env files
+.env
+.env.*
+
+# typescript
+*.tsbuildinfo
