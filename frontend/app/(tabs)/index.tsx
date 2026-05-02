@@ -16,6 +16,7 @@ import {
   FlatList,
   StyleSheet,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { getMatches, getPredictions, createPrediction } from "../../services/api";
 import { Match, Prediction } from "../../types";
@@ -30,6 +31,7 @@ export default function Home() {
   const [inputs, setInputs] = useState<Record<string, { home: string; away: string }>>({});
   const [activeTab, setActiveTab] = useState<"upcoming" | "finished">("upcoming");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState<string | null>(null);
 
@@ -69,6 +71,13 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Pull-to-refresh
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
   };
 
   /**
@@ -168,8 +177,11 @@ export default function Home() {
       {/* Poängsammanfattning */}
       <ScoreSummary predictions={predictions} />
 
-      {/* Flikar */}
+      {/* Flikar + uppdatera-knapp */}
       <View style={styles.tabRow}>
+        <Pressable style={styles.refreshButton} onPress={onRefresh} disabled={refreshing}>
+          <Text style={styles.refreshButtonText}>{refreshing ? "⏳" : "🔄"}</Text>
+        </Pressable>
         <Pressable
           style={[styles.tab, activeTab === "upcoming" && styles.tabActive]}
           onPress={() => setActiveTab("upcoming")}
@@ -193,6 +205,9 @@ export default function Home() {
         data={displayedMatches}
         renderItem={renderMatch}
         keyExtractor={(m) => m.matchId}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
         ListEmptyComponent={
           <Text style={styles.emptyText}>
             {activeTab === "upcoming"
@@ -221,7 +236,9 @@ const styles = StyleSheet.create({
   },
   errorText: { color: AppColors.error, fontSize: 14, flex: 1 },
   retryText: { color: AppColors.primary, fontWeight: "bold", marginLeft: 12 },
-  tabRow: { flexDirection: "row", marginBottom: 16 },
+  tabRow: { flexDirection: "row", marginBottom: 16, alignItems: "center" },
+  refreshButton: { paddingHorizontal: 12, paddingVertical: 8 },
+  refreshButtonText: { fontSize: 20 },
   tab: {
     flex: 1,
     paddingVertical: 12,
