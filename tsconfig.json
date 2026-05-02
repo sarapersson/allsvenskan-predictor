@@ -4,14 +4,17 @@
     "module": "commonjs",
     "lib": ["ES2024"],
     "strict": true,
-    "rootDir": "./src",
+    "rootDir": ".",
     "outDir": ".build",
     "sourceMap": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node"]
+    "types": ["node"],
+    "paths": {
+      "@shared/*": ["./shared/*"]
+    }
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "shared/**/*.ts"],
   "exclude": ["node_modules"]
 }
