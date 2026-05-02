@@ -57,36 +57,36 @@ EVENT-DRIVEN (EventBridge Bus)
 
 ## 🚀 Deploy
 
+### 1. Skapa API-nyckel i SSM (före första deploy):
+```bash
+aws ssm put-parameter \
+  --name "/allsvenskan-predictor/dev/api-key" \
+  --value "$(openssl rand -hex 16)" \
+  --type SecureString \
+  --region eu-north-1
+```
+
+### 2. Deploya
 ```bash
 npm install
 npx serverless deploy
 ```
 
-### Efter deploy
+### 3. Seed matchdata
+Hämtar alla 30 omgångar för Allsvenskan 2026 från TheSportsDB till DynamoDB:
+```bash
+npx serverless invoke -f fetchMatches
+```
+Detta körs sedan automatiskt var 2:a timme (resultat) och dagligen (datumändringar) via EventBridge.
 
-1. **Skapa API-nyckel i SSM** (första gången):
-   ```bash
-   aws ssm put-parameter \
-     --name "/allsvenskan-predictor/dev/api-key" \
-     --value "$(openssl rand -hex 16)" \
-     --type SecureString \
-     --region eu-north-1
-   ```
-
-2. **Prenumerera på larm** (e-post vid fel):
-   ```bash
-   aws sns subscribe \
-     --topic-arn arn:aws:sns:eu-north-1:<ACCOUNT_ID>:allsvenskan-predictor-alarms-dev \
-     --protocol email \
-     --notification-endpoint din@email.com \
-     --region eu-north-1
-   ```
-
-3. **Seed matchdata** (hämtar alla 30 omgångar för Allsvenskan 2026 från TheSportsDB till DynamoDB):
-   ```bash
-   npx serverless invoke -f fetchMatches
-   ```
-   Detta körs sedan automatiskt var 2:a timme (resultat) och dagligen (datumändringar) via EventBridge.
+### 4. Prenumerera på larm (valfritt, e-post vid fel):
+```bash
+aws sns subscribe \
+  --topic-arn arn:aws:sns:eu-north-1:<ACCOUNT_ID>:allsvenskan-predictor-alarms-dev \
+  --protocol email \
+  --notification-endpoint din@email.com \
+  --region eu-north-1
+```
 
 ## 💻 Frontend
 
