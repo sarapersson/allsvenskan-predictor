@@ -1,0 +1,146 @@
+{
+  "info": {
+    "name": "Allsvenskan Predictor",
+    "description": "API för att tippa Allsvenskan-matcher.\n\n**Krav som visas:**\n- 3 routes (GET /matches, GET /predictions, POST /predictions)\n- Lambda per route med affärslogik\n- DynamoDB persistent data\n- Event-driven: calculateScores + logPrediction via EventBridge\n- Authorizer: API-key",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://DIN-API-URL.execute-api.eu-north-1.amazonaws.com",
+      "type": "string"
+    },
+    {
+      "key": "apiKey",
+      "value": "DIN-API-NYCKEL",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. GET /matches - Hämta alla matcher",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/matches",
+          "host": ["{{baseUrl}}"],
+          "path": ["matches"]
+        },
+        "description": "Hämtar alla Allsvenskan-matcher från DynamoDB.\nVisar: API Gateway → Lambda → DynamoDB Scan"
+      }
+    },
+    {
+      "name": "2. GET /matches?round=1 - Hämta matcher per omgång",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/matches?round=1",
+          "host": ["{{baseUrl}}"],
+          "path": ["matches"],
+          "query": [
+            {
+              "key": "round",
+              "value": "1"
+            }
+          ]
+        },
+        "description": "Hämtar matcher för en specifik omgång via GSI (round-date-index).\nVisar: Query med GSI istället för Scan"
+      }
+    },
+    {
+      "name": "3. GET /predictions - Hämta alla tips",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/predictions",
+          "host": ["{{baseUrl}}"],
+          "path": ["predictions"]
+        },
+        "description": "Hämtar alla sparade tips från DynamoDB.\nVisar: Persistent data i DynamoDB"
+      }
+    },
+    {
+      "name": "4. POST /predictions - Skapa ett tips",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"matchId\": \"1234567\",\n  \"predictedHome\": 2,\n  \"predictedAway\": 1\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/predictions",
+          "host": ["{{baseUrl}}"],
+          "path": ["predictions"]
+        },
+        "description": "Skapar ett nytt tips.\nVisar:\n- Affärslogik: validering, duplikatskydd (ConditionExpression)\n- DynamoDB: PutItem\n- EventBridge: PredictionCreated-event → logPrediction Lambda"
+      }
+    },
+    {
+      "name": "5. POST /predictions - Duplikat (409)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"matchId\": \"1234567\",\n  \"predictedHome\": 3,\n  \"predictedAway\": 0\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/predictions",
+          "host": ["{{baseUrl}}"],
+          "path": ["predictions"]
+        },
+        "description": "Visar duplikatskydd - samma matchId ger 409 Conflict.\nVisar: Atomiskt skydd med DynamoDB ConditionExpression"
+      }
+    },
+    {
+      "name": "6. GET /matches - Utan API-key (401)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/matches",
+          "host": ["{{baseUrl}}"],
+          "path": ["matches"]
+        },
+        "description": "Visar att authorizer nekar request utan API-key.\nVisar: Säkerhet med API-key authorizer"
+      }
+    }
+  ]
+}
