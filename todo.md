@@ -29,11 +29,11 @@
 
 ## Low Priority
 
-- [ ] Remove unused boilerplate (`explore.tsx`, `modal.tsx`)
-- [ ] Add `build` script to root `package.json`
+- [x] Remove unused boilerplate (`explore.tsx`, `modal.tsx`)
+- [x] Add `build` script to root `package.json`
 - [ ] Add shared types package (avoid type drift between frontend/backend)
 - [ ] Add CloudWatch alarms for Lambda errors
 - [ ] Make `calculateScores` event-driven instead of hourly schedule
 - [ ] Add basic test framework and unit tests
-- [ ] Add `.env.example` files for developer onboarding
-- [ ] Add Lambda concurrency limits
+- [x] Add `.env.example` files for developer onboarding
+- [x] Add Lambda concurrency limits
