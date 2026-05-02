@@ -32,7 +32,7 @@
 - [x] Remove unused boilerplate (`explore.tsx`, `modal.tsx`)
 - [x] Add `build` script to root `package.json`
 - [ ] Add shared types package (avoid type drift between frontend/backend)
-- [ ] Add CloudWatch alarms for Lambda errors
+- [x] Add CloudWatch alarms for Lambda errors
 - [ ] Make `calculateScores` event-driven instead of hourly schedule
 - [ ] Add basic test framework and unit tests
 - [x] Add `.env.example` files for developer onboarding
