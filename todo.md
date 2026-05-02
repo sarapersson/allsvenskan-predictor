@@ -14,7 +14,7 @@
 - [x] Handle unprocessed batch items in `fetchMatches.ts`
 - [x] Guard against `NaN` from `parseInt` in `fetchMatches.ts`
 - [x] Add request timeout (AbortController) in `frontend/services/api.ts`
-- [ ] Fix IAM ARNs to use `${aws:accountId}` instead of wildcard
+- [x] Fix IAM ARNs to use `${aws:accountId}` instead of wildcard
 
 ## Medium Priority
 

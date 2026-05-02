@@ -60,15 +60,15 @@ provider:
             - dynamodb:Query
             - dynamodb:UpdateItem
           Resource:
-            - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.MATCHES_TABLE}
-            - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PREDICTIONS_TABLE}
-            - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PREDICTIONS_TABLE}/index/*
+            - !GetAtt MatchesTable.Arn
+            - !GetAtt PredictionsTable.Arn
+            - !Join ["/", [!GetAtt PredictionsTable.Arn, "index/*"]]
         # EventBridge-åtkomst (begränsad till vår bus)
         - Effect: Allow
           Action:
             - events:PutEvents
           Resource:
-            - arn:aws:events:${self:provider.region}:*:event-bus/allsvenskan-prediction-bus
+            - !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/allsvenskan-prediction-bus"
 
 custom:
   apiKey: ${ssm:/allsvenskan-predictor/${self:provider.stage}/api-key}
