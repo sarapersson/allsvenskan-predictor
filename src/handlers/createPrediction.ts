@@ -21,10 +21,9 @@ import { randomUUID } from "crypto";
 
 const eventBridge = new EventBridgeClient({});
 
-// CORS-headers som krävs för frontend-anrop
+// Headers hanteras av API Gateway CORS-config i serverless.yml
 const headers = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type, x-api-key",
+  "Content-Type": "application/json",
 };
 
 export const handler = async (event: any) => {
