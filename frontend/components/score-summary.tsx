@@ -7,6 +7,7 @@
 
 import { View, Text, StyleSheet } from "react-native";
 import { Prediction } from "../types";
+import { AppColors } from "../constants/theme";
 
 interface ScoreSummaryProps {
   predictions: Prediction[];
@@ -35,7 +36,7 @@ const styles = StyleSheet.create({
   score: { fontSize: 20, fontWeight: "bold", textAlign: "center" },
   scoreSubtitle: {
     fontSize: 12,
-    color: "#666",
+    color: AppColors.textSecondary,
     textAlign: "center",
     marginBottom: 16,
     lineHeight: 18,
