@@ -147,7 +147,7 @@ export const handler = async (event: any) => {
             {
               Source: "allsvenskan.predictions",
               DetailType: "PredictionCreated",
-              EventBusName: "allsvenskan-prediction-bus",
+              EventBusName: process.env.EVENT_BUS_NAME,
               Detail: JSON.stringify(prediction),
             },
           ],
