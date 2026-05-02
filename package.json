@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Allsvenskan match predictor API",
   "scripts": {
+    "deploy": "npx serverless deploy",
+    "remove": "npx serverless remove && aws events delete-event-bus --name allsvenskan-prediction-bus --region eu-north-1 2>/dev/null; true",
+    "redeploy": "npm run remove && npm run deploy && npx serverless invoke -f fetchMatches",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

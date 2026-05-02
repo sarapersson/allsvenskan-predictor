@@ -13,10 +13,12 @@ API GATEWAY (Säkrad med API-key)
 |-- GET /predictions ------> getPredictions (Lambda) --> DynamoDB (PredictionsTable)
 |-- POST /predictions -----> createPrediction (Lambda) > DynamoDB (PredictionsTable)
 
-EVENTBRIDGE
+SCHEDULED (EventBridge Schedule)
 |-- fetchMatches (Lambda) -----> Hämtar data från API --> DynamoDB (MatchesTable)
 |-- calculateScores (Lambda) --> Läser båda tabeller ---> Uppdaterar PredictionsTable
-|-- logPrediction (Lambda) ----> Loggar varje nytt tips (triggad av event)
+
+EVENT-DRIVEN (EventBridge Bus)
+|-- logPrediction (Lambda) ----> Loggar varje nytt tips (triggad av PredictionCreated-event)
 ```
 
 ## 🛠 Tech Stack

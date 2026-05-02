@@ -18,7 +18,7 @@ provider:
   runtime: nodejs22.x
   region: eu-north-1
   stage: ${opt:stage, 'dev'}  # Kan overridas med --stage prod
-  timeout: 30                  # Default timeout för alla Lambdas (sekunder)
+  timeout: 10                  # Default timeout för alla Lambdas (sekunder)
   memorySize: 256              # Default minne för alla Lambdas (MB)
 
   httpApi:
@@ -168,9 +168,3 @@ resources:
           - AttributeName: predictionId
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
-
-    # EventBridge-bus för prediction-events
-    PredictionEventBus:
-      Type: AWS::Events::EventBus
-      Properties:
-        Name: allsvenskan-prediction-bus
