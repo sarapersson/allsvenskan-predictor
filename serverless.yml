@@ -234,17 +234,55 @@ resources:
       Properties:
         TopicName: ${self:service}-alarms-${self:provider.stage}
 
-    # Larm: Lambda-fel (triggas om >= 1 error på 5 min)
-    LambdaErrorAlarm:
+    # Larm: fetchMatches-fel
+    FetchMatchesErrorAlarm:
       Type: AWS::CloudWatch::Alarm
       Properties:
-        AlarmName: ${self:service}-lambda-errors-${self:provider.stage}
-        AlarmDescription: "En eller flera Lambda-funktioner har kastat fel"
+        AlarmName: ${self:service}-fetchMatches-errors-${self:provider.stage}
+        AlarmDescription: "fetchMatches har kastat fel"
         Namespace: AWS/Lambda
         MetricName: Errors
         Dimensions:
           - Name: FunctionName
             Value: ${self:service}-${self:provider.stage}-fetchMatches
+        Statistic: Sum
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 1
+        ComparisonOperator: GreaterThanOrEqualToThreshold
+        AlarmActions:
+          - !Ref AlarmTopic
+
+    # Larm: createPrediction-fel
+    CreatePredictionErrorAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName: ${self:service}-createPrediction-errors-${self:provider.stage}
+        AlarmDescription: "createPrediction har kastat fel"
+        Namespace: AWS/Lambda
+        MetricName: Errors
+        Dimensions:
+          - Name: FunctionName
+            Value: ${self:service}-${self:provider.stage}-createPrediction
+        Statistic: Sum
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 1
+        ComparisonOperator: GreaterThanOrEqualToThreshold
+        AlarmActions:
+          - !Ref AlarmTopic
+
+    # Larm: calculateScores-fel
+    CalculateScoresErrorAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName: ${self:service}-calculateScores-errors-${self:provider.stage}
+        AlarmDescription: "calculateScores har kastat fel"
+        Namespace: AWS/Lambda
+        MetricName: Errors
+        Dimensions:
+          - Name: FunctionName
+            Value: ${self:service}-${self:provider.stage}-calculateScores
         Statistic: Sum
         Period: 300
         EvaluationPeriods: 1
