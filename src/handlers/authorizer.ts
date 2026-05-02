@@ -1,3 +1,5 @@
+import { timingSafeEqual } from "crypto";
+
 /**
  * Authorizer - Validerar API-nycklar för alla inkommande requests
  *
@@ -32,8 +34,12 @@ export const handler = async (event: any) => {
     return { isAuthorized: false };
   }
 
-  // Fall 2: Nyckeln matchar - ge åtkomst
-  if (apiKey === validKey) {
+  // Fall 2: Jämför nycklar med timingSafeEqual (skydd mot timing attacks)
+  const keysMatch =
+    apiKey.length === validKey.length &&
+    timingSafeEqual(Buffer.from(apiKey), Buffer.from(validKey));
+
+  if (keysMatch) {
     console.log("✅ Authorized");
     return { isAuthorized: true };
   }
