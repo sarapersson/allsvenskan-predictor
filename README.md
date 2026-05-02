@@ -26,7 +26,7 @@ EVENT-DRIVEN (EventBridge Bus)
 - **Backend:** Node.js, TypeScript, Serverless Framework
 - **Moln:** AWS Lambda, API Gateway, DynamoDB, EventBridge
 - **Frontend:** React Native med Expo
-- **Data:** Allsvenskan API (api-football)
+- **Data:** TheSportsDB (gratis API)
 
 ## 🔌 API Endpoints
 
@@ -40,9 +40,9 @@ EVENT-DRIVEN (EventBridge Bus)
 
 | Funktion | Trigger | Beskrivning |
 |----------|---------|-------------|
-| fetchMatches | EventBridge (schema) | Hämtar matchdata från extern API och sparar i DynamoDB |
-| calculateScores | EventBridge (schema) | Beräknar poäng för alla tips baserat på faktiska resultat |
-| logPrediction | EventBridge (event) | Loggar varje tips som skapas |
+| fetchMatches | EventBridge (var 2:a timme + dagligen) | Hämtar matchdata från TheSportsDB, smart fetch av omgångar som behöver uppdateras |
+| calculateScores | EventBridge (MatchesUpdated-event) | Beräknar poäng för alla tips baserat på faktiska resultat |
+| logPrediction | EventBridge (PredictionCreated-event) | Loggar varje tips som skapas |
 
 ## 🏆 Poängsystem
 
@@ -81,7 +81,7 @@ npx serverless deploy
    ```bash
    npx serverless invoke -f fetchMatches
    ```
-   Detta körs sedan automatiskt en gång per dag via EventBridge för att hålla resultat uppdaterade.
+   Detta körs sedan automatiskt var 2:a timme (resultat) och dagligen (datumändringar) via EventBridge.
 
 ## 💻 Frontend
 
@@ -109,14 +109,26 @@ allsvenskan-predictor/
 │   │   └── index.ts
 │   └── utils/
 │       └── dynamodb.ts
+├── shared/
+│   └── types/
+│       └── index.ts          # Delade typer (Match, Prediction)
+├── tests/
+│   ├── calculateScores.test.ts
+│   └── fetchMatches.test.ts
 ├── frontend/
 │   ├── app/
 │   │   └── (tabs)/
 │   │       └── index.tsx
+│   ├── components/
+│   │   ├── match-card.tsx
+│   │   └── score-summary.tsx
+│   ├── constants/
+│   │   └── theme.ts
 │   ├── services/
 │   │   └── api.ts
 │   └── package.json
 ├── serverless.yml
+├── vitest.config.ts
 ├── package.json
 └── README.md
 ```
