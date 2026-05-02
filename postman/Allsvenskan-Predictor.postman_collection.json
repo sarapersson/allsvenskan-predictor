@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "Allsvenskan Predictor",
-    "description": "API för att tippa Allsvenskan-matcher.\n\n**Krav som visas:**\n- 3 routes (GET /matches, GET /predictions, POST /predictions)\n- Lambda per route med affärslogik\n- DynamoDB persistent data\n- Event-driven: calculateScores + logPrediction via EventBridge\n- Authorizer: API-key",
+    "name": "Allsvenskan Predictor - Demo",
+    "description": "Demo av Allsvenskan Tipsspel-API:et.\n\nKörordning:\n1. Utan API-key → 401 (visar authorizer)\n2. Fel API-key → 403 (visar validering)\n3. GET /matches (visar DynamoDB + Lambda)\n4. GET /matches?round=1 (visar GSI-query)\n5. POST /predictions (visar affärslogik + EventBridge)\n6. GET /predictions (visar persistent data)\n\n**VG-krav som visas:**\n- Event-driven: logPrediction triggas av PredictionCreated via EventBridge\n- Authorizer: API-key validering",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -18,7 +18,38 @@
   ],
   "item": [
     {
-      "name": "1. GET /matches - Hämta alla matcher",
+      "name": "1. Utan API-key → 401 Unauthorized",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/matches",
+          "host": ["{{baseUrl}}"],
+          "path": ["matches"]
+        },
+        "description": "Visar att authorizer nekar request utan API-key.\n→ Förväntat svar: 401 Unauthorized"
+      }
+    },
+    {
+      "name": "2. Fel API-key → 403 Forbidden",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "x-api-key",
+            "value": "fel-nyckel-123"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/matches",
+          "host": ["{{baseUrl}}"],
+          "path": ["matches"]
+        },
+        "description": "Visar att authorizer nekar request med felaktig API-key.\n→ Förväntat svar: 403 Forbidden"
+      }
+    },
+    {
+      "name": "3. GET /matches - Hämta alla matcher",
       "request": {
         "method": "GET",
         "header": [
@@ -32,11 +63,11 @@
           "host": ["{{baseUrl}}"],
           "path": ["matches"]
         },
-        "description": "Hämtar alla Allsvenskan-matcher från DynamoDB.\nVisar: API Gateway → Lambda → DynamoDB Scan"
+        "description": "Hämtar alla Allsvenskan-matcher från DynamoDB.\n→ Visar: API Gateway → Lambda → DynamoDB\n→ Förväntat: 200 med array av matcher"
       }
     },
     {
-      "name": "2. GET /matches?round=1 - Hämta matcher per omgång",
+      "name": "4. GET /matches?round=1 - Filtrera per omgång",
       "request": {
         "method": "GET",
         "header": [
@@ -56,29 +87,11 @@
             }
           ]
         },
-        "description": "Hämtar matcher för en specifik omgång via GSI (round-date-index).\nVisar: Query med GSI istället för Scan"
+        "description": "Hämtar matcher för omgång 1 via GSI (round-date-index).\n→ Visar: Query med Global Secondary Index\n→ Förväntat: 200 med 8 matcher"
       }
     },
     {
-      "name": "3. GET /predictions - Hämta alla tips",
-      "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "x-api-key",
-            "value": "{{apiKey}}"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/predictions",
-          "host": ["{{baseUrl}}"],
-          "path": ["predictions"]
-        },
-        "description": "Hämtar alla sparade tips från DynamoDB.\nVisar: Persistent data i DynamoDB"
-      }
-    },
-    {
-      "name": "4. POST /predictions - Skapa ett tips",
+      "name": "5. POST /predictions - Skapa ett tips",
       "request": {
         "method": "POST",
         "header": [
@@ -100,46 +113,25 @@
           "host": ["{{baseUrl}}"],
           "path": ["predictions"]
         },
-        "description": "Skapar ett nytt tips.\nVisar:\n- Affärslogik: validering, duplikatskydd (ConditionExpression)\n- DynamoDB: PutItem\n- EventBridge: PredictionCreated-event → logPrediction Lambda"
+        "description": "Skapar ett nytt tips. Triggar EventBridge → logPrediction.\n→ Visar: Affärslogik, DynamoDB PutItem, EventBridge-event\n→ Förväntat: 201 med prediction-objekt\n→ Kör igen för att visa duplikatskydd (409)"
       }
     },
     {
-      "name": "5. POST /predictions - Duplikat (409)",
+      "name": "6. GET /predictions - Hämta alla tips",
       "request": {
-        "method": "POST",
+        "method": "GET",
         "header": [
           {
             "key": "x-api-key",
             "value": "{{apiKey}}"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json"
           }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"matchId\": \"1234567\",\n  \"predictedHome\": 3,\n  \"predictedAway\": 0\n}"
-        },
         "url": {
           "raw": "{{baseUrl}}/predictions",
           "host": ["{{baseUrl}}"],
           "path": ["predictions"]
         },
-        "description": "Visar duplikatskydd - samma matchId ger 409 Conflict.\nVisar: Atomiskt skydd med DynamoDB ConditionExpression"
-      }
-    },
-    {
-      "name": "6. GET /matches - Utan API-key (401)",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/matches",
-          "host": ["{{baseUrl}}"],
-          "path": ["matches"]
-        },
-        "description": "Visar att authorizer nekar request utan API-key.\nVisar: Säkerhet med API-key authorizer"
+        "description": "Hämtar alla sparade tips från DynamoDB.\n→ Visar: Persistent data – tipset vi just skapade finns här\n→ Förväntat: 200 med array innehållande vårt tips"
       }
     }
   ]
