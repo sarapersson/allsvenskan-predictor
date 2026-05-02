@@ -15,9 +15,9 @@
  */
 
 import { docClient } from "../utils/dynamodb";
-import { PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand } from "@aws-sdk/lib-dynamodb";
 import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge";
-import { randomUUID } from "crypto";
+
 
 const eventBridge = new EventBridgeClient({});
 
@@ -105,29 +105,11 @@ export const handler = async (event: any) => {
       };
     }
 
-    // --- Steg 3: Kolla om det redan finns ett tips för denna match ---
-    const existing = await docClient.send(
-      new QueryCommand({
-        TableName: process.env.PREDICTIONS_TABLE,
-        IndexName: "matchId-index",
-        KeyConditionExpression: "matchId = :matchId",
-        ExpressionAttributeValues: { ":matchId": matchId },
-        Limit: 1,
-      })
-    );
-
-    if (existing.Items && existing.Items.length > 0) {
-      console.warn(`⚠️ Denied: Prediction already exists for match ${matchId}`);
-      return {
-        statusCode: 409,
-        headers,
-        body: JSON.stringify({ message: "A prediction already exists for this match" }),
-      };
-    }
-
-    // --- Steg 4: Skapa och spara tipset i DynamoDB ---
+    // --- Steg 3: Skapa och spara tipset i DynamoDB (atomiskt) ---
+    // Deterministiskt predictionId baserat på matchId → ConditionExpression
+    // förhindrar dubbletter atomiskt (ingen race condition)
     const prediction = {
-      predictionId: randomUUID(),
+      predictionId: `pred_${matchId}`,
       matchId,
       predictedHome,
       predictedAway,
@@ -135,12 +117,25 @@ export const handler = async (event: any) => {
       createdAt: new Date().toISOString(),
     };
 
-    await docClient.send(
-      new PutCommand({
-        TableName: process.env.PREDICTIONS_TABLE,
-        Item: prediction,
-      })
-    );
+    try {
+      await docClient.send(
+        new PutCommand({
+          TableName: process.env.PREDICTIONS_TABLE,
+          Item: prediction,
+          ConditionExpression: "attribute_not_exists(predictionId)",
+        })
+      );
+    } catch (putError: any) {
+      if (putError.name === "ConditionalCheckFailedException") {
+        console.warn(`⚠️ Denied: Prediction already exists for match ${matchId}`);
+        return {
+          statusCode: 409,
+          headers,
+          body: JSON.stringify({ message: "A prediction already exists for this match" }),
+        };
+      }
+      throw putError;
+    }
 
     console.log(`📝 Prediction saved: ${prediction.predictionId} (match: ${matchId}, tip: ${predictedHome}-${predictedAway})`);
 
