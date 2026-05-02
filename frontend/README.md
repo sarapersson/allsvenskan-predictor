@@ -46,15 +46,12 @@ frontend/
 ├── app/
 │   ├── (tabs)/
 │   │   ├── _layout.tsx      Layout för tabs
-│   │   ├── index.tsx        Hemskärm - matcher
-│   │   └── explore.tsx      Utforska
-│   ├── _layout.tsx          Root layout med navigation
-│   └── modal.tsx            Modal-vy
+│   │   └── index.tsx        Hemskärm - matcher och tips
+│   └── _layout.tsx          Root layout med navigation
 ├── assets/images/           Bilder och ikoner
 ├── components/              Återanvändbara UI-komponenter
 ├── constants/               Färger, config, etc.
 ├── hooks/                   Custom React hooks
-├── scripts/                 Hjälpskript
 ├── services/
 │   └── api.ts              API-anrop mot backend
 ├── .env                     Miljövariabler (INTE i git)
