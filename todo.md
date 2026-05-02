@@ -23,8 +23,8 @@
 - [x] Enable Point-in-Time Recovery on DynamoDB tables
 - [x] Add DLQ for `logPrediction` Lambda
 - [x] Increase `fetchMatches` timeout to 90s
-- [ ] Refactor `frontend/app/(tabs)/index.tsx` into smaller components
-- [ ] Replace O(n²) prediction lookup with a Map/useMemo
+- [x] Refactor `frontend/app/(tabs)/index.tsx` into smaller components
+- [x] Replace O(n²) prediction lookup with a Map/useMemo
 - [ ] Use theme constants instead of hardcoded colors in frontend
 
 ## Low Priority
