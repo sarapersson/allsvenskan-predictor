@@ -69,6 +69,12 @@ provider:
             - events:PutEvents
           Resource:
             - !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/allsvenskan-prediction-bus"
+        # SQS-åtkomst för DLQ
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+          Resource:
+            - !GetAtt LogPredictionDLQ.Arn
 
 custom:
   apiKey: ${ssm:/allsvenskan-predictor/${self:provider.stage}/api-key}
@@ -113,7 +119,7 @@ functions:
   # --- Scheduled Jobs ---
   fetchMatches:
     handler: src/handlers/fetchMatches.handler
-    timeout: 60  # Behöver mer tid - hämtar 30 omgångar från externt API
+    timeout: 90  # Behöver mer tid - hämtar 30 omgångar från externt API med retries
     events:
       - schedule:
           rate: rate(1 day)
@@ -131,6 +137,8 @@ functions:
   # --- Event-driven ---
   logPrediction:
     handler: src/handlers/logPrediction.handler
+    maximumRetryAttempts: 2
+    onError: !GetAtt LogPredictionDLQ.Arn
     events:
       - eventBridge:
           eventBus: allsvenskan-prediction-bus
@@ -158,6 +166,8 @@ resources:
           - AttributeName: matchId
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
 
     # DynamoDB-tabell för tips
     PredictionsTable:
@@ -180,3 +190,12 @@ resources:
             Projection:
               ProjectionType: ALL
         BillingMode: PAY_PER_REQUEST
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+
+    # Dead Letter Queue för logPrediction
+    LogPredictionDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-log-prediction-dlq-${self:provider.stage}
+        MessageRetentionPeriod: 1209600  # 14 dagar
