@@ -1,16 +1,24 @@
 /**
  * fetchMatches - Hämtar matchdata från TheSportsDB och sparar i DynamoDB
  *
- * Denna Lambda triggas av EventBridge på schema (t.ex. varje dag).
- * Den loopar igenom alla omgångar i Allsvenskan, hämtar matchdata
- * från det externa API:t och sparar i DynamoDB med BatchWrite.
+ * Denna Lambda triggas av två scheman:
+ * - Var 2:a timme (mode: "scores"): Hämtar bara omgångar som saknar
+ *   slutresultat eller inte finns i DB. Snabb uppdatering av resultat.
+ * - En gång per dag (mode: "full"): Hämtar ALLA framtida omgångar för att
+ *   fånga datumändringar. Allsvenskan uppdaterar speldatum/tider löpande.
+ *
+ * Om matcher med slutresultat hittas skickas ett MatchesUpdated-event
+ * som triggar calculateScores.
  *
  * Datakälla: TheSportsDB (gratis API, max 100 requests/dag på free tier)
  */
 
 import { docClient } from "../utils/dynamodb";
-import { BatchWriteCommand } from "@aws-sdk/lib-dynamodb";
-import { SportsDBEvent } from "../types";
+import { BatchWriteCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge";
+import { SportsDBEvent, Match } from "../types";
+
+const eventBridge = new EventBridgeClient({});
 
 interface SportsDBResponse {
   events: SportsDBEvent[] | null;
@@ -46,8 +54,9 @@ function safeParseScore(value: string | null | undefined): number | null {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
-export const handler = async () => {
-  console.log("🔄 fetchMatches started", { league: LEAGUE_ID, season: SEASON, rounds: TOTAL_ROUNDS });
+export const handler = async (event?: { mode?: string }) => {
+  const mode = event?.mode || "scores";
+  console.log("🔄 fetchMatches started", { mode, league: LEAGUE_ID, season: SEASON, rounds: TOTAL_ROUNDS });
 
   // Validera att miljövariabler finns
   if (!process.env.MATCHES_TABLE) {
@@ -56,11 +65,54 @@ export const handler = async () => {
   }
 
   try {
+    // --- Steg 1: Läs befintliga matcher från DynamoDB ---
+    const existingResult = await docClient.send(
+      new ScanCommand({ TableName: process.env.MATCHES_TABLE })
+    );
+    const existingMatches = (existingResult.Items || []) as Match[];
+
+    // --- Steg 2: Bestäm vilka omgångar som behöver hämtas ---
+    const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
+
+    const roundsNeedingUpdate = new Set<number>();
+
+    for (const match of existingMatches) {
+      const round = parseInt(match.round);
+
+      // Omgångar som borde ha slutresultat men saknar det (alltid)
+      if (match.date <= today && match.homeScore === null) {
+        roundsNeedingUpdate.add(round);
+      }
+
+      // I "full" mode: hämta ALLA framtida omgångar för att fånga datumändringar
+      // Spelschema i Allsvenskan uppdateras löpande under säsongen
+      if (mode === "full" && match.date > today) {
+        roundsNeedingUpdate.add(round);
+      }
+    }
+
+    // Hitta omgångar som inte finns i DB ännu (nya matcher att upptäcka)
+    const existingRounds = new Set(existingMatches.map((m) => parseInt(m.round)));
+    for (let round = 1; round <= TOTAL_ROUNDS; round++) {
+      if (!existingRounds.has(round)) {
+        roundsNeedingUpdate.add(round);
+      }
+    }
+
+    // Om inget behöver uppdateras, avsluta tidigt
+    if (roundsNeedingUpdate.size === 0) {
+      console.log("✅ All matches up to date, nothing to fetch");
+      return { fetched: 0, saved: 0, unprocessed: 0, skipped: true };
+    }
+
+    const roundsToFetch = Array.from(roundsNeedingUpdate).sort((a, b) => a - b);
+    console.log(`🎯 Fetching ${roundsToFetch.length} rounds: [${roundsToFetch.join(", ")}]`);
+
+    // --- Steg 3: Hämta matchdata från API för relevanta omgångar ---
     const allMatches: any[] = [];
     const failedRounds: number[] = [];
 
-    // --- Steg 1: Hämta matchdata från API för varje omgång ---
-    for (let round = 1; round <= TOTAL_ROUNDS; round++) {
+    for (const round of roundsToFetch) {
       try {
         const url = `https://www.thesportsdb.com/api/v1/json/3/eventsround.php?id=${LEAGUE_ID}&r=${round}&s=${SEASON}`;
         const res = await fetchWithRetry(url);
@@ -100,14 +152,14 @@ export const handler = async () => {
       }
     }
 
-    console.log(`📊 Fetched ${allMatches.length} matches from API (${failedRounds.length} rounds failed)`);
+    console.log(`📊 Fetched ${allMatches.length} matches from ${roundsToFetch.length} rounds (${failedRounds.length} failed)`);
 
-    // Om inga matcher hämtades alls - något är fel
-    if (allMatches.length === 0) {
+    // Om inga matcher hämtades alls och vi förväntade oss data
+    if (allMatches.length === 0 && failedRounds.length === roundsToFetch.length) {
       throw new Error("No matches fetched from API - possible API outage or config error");
     }
 
-    // --- Steg 2: Spara i DynamoDB med BatchWrite (max 25 per anrop) ---
+    // --- Steg 4: Spara i DynamoDB med BatchWrite (max 25 per anrop) ---
     let totalSaved = 0;
     let unprocessedTotal = 0;
 
@@ -157,7 +209,7 @@ export const handler = async () => {
       }
     }
 
-    // --- Steg 3: Sammanfattning ---
+    // --- Steg 5: Sammanfattning ---
     const summary = {
       fetched: allMatches.length,
       saved: totalSaved,
@@ -167,9 +219,34 @@ export const handler = async () => {
 
     console.log("✅ fetchMatches complete:", summary);
 
+    // --- Steg 6: Emit event om matcher med resultat hittades ---
+    const finishedMatches = allMatches.filter((m) => m.homeScore !== null);
+    if (finishedMatches.length > 0) {
+      try {
+        await eventBridge.send(
+          new PutEventsCommand({
+            Entries: [
+              {
+                Source: "allsvenskan.matches",
+                DetailType: "MatchesUpdated",
+                EventBusName: "allsvenskan-prediction-bus",
+                Detail: JSON.stringify({
+                  finishedCount: finishedMatches.length,
+                  totalCount: allMatches.length,
+                }),
+              },
+            ],
+          })
+        );
+        console.log(`📣 MatchesUpdated event sent (${finishedMatches.length} finished matches)`);
+      } catch (eventError) {
+        console.error("⚠️ EventBridge send failed (matches still saved):", eventError);
+      }
+    }
+
     // Om för många fel, markera Lambda som failed
-    if (failedRounds.length > TOTAL_ROUNDS / 2) {
-      throw new Error(`Too many failed rounds (${failedRounds.length}/${TOTAL_ROUNDS}) - possible API issue`);
+    if (failedRounds.length > roundsToFetch.length / 2) {
+      throw new Error(`Too many failed rounds (${failedRounds.length}/${roundsToFetch.length}) - possible API issue`);
     }
 
     if (unprocessedTotal > 0) {

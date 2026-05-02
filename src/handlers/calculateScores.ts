@@ -1,7 +1,8 @@
 /**
  * calculateScores - Beräknar poäng för alla obesvarade tips
  *
- * Denna Lambda triggas av EventBridge på schema (t.ex. varje timme).
+ * Denna Lambda triggas av ett MatchesUpdated-event från fetchMatches
+ * när matcher med slutresultat har sparats i DynamoDB.
  * Den hämtar alla avslutade matcher och alla tips som inte fått poäng ännu,
  * jämför tipsen mot faktiska resultat och uppdaterar poängen i DynamoDB.
  *
