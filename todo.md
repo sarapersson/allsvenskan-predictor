@@ -9,7 +9,7 @@
 
 ## High Priority
 
-- [ ] Add duplicate prediction prevention in `createPrediction.ts` (conditional write)
+- [x] Add duplicate prediction prevention in `createPrediction.ts` (conditional write)
 - [ ] Add retry logic with exponential backoff in `fetchMatches.ts`
 - [ ] Handle unprocessed batch items in `fetchMatches.ts`
 - [ ] Guard against `NaN` from `parseInt` in `fetchMatches.ts`
