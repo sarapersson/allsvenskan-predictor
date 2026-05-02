@@ -15,9 +15,9 @@ API GATEWAY (Säkrad med API-key)
 
 SCHEDULED (EventBridge Schedule)
 |-- fetchMatches (Lambda) -----> Hämtar data från API --> DynamoDB (MatchesTable)
-|-- calculateScores (Lambda) --> Läser båda tabeller ---> Uppdaterar PredictionsTable
 
 EVENT-DRIVEN (EventBridge Bus)
+|-- calculateScores (Lambda) --> Triggad av MatchesUpdated --> Uppdaterar PredictionsTable
 |-- logPrediction (Lambda) ----> Loggar varje nytt tips (triggad av PredictionCreated-event)
 ```
 

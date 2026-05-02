@@ -123,18 +123,29 @@ functions:
     reservedConcurrency: 1  # Förhindra parallella körningar som kan orsaka dubbletter
     events:
       - schedule:
+          rate: rate(2 hours)
+          enabled: true
+          input:
+            mode: "scores"
+          description: "Fetch match scores for rounds that need updating"
+      - schedule:
           rate: rate(1 day)
           enabled: true
-          description: "Fetch latest match data from TheSportsDB"
+          input:
+            mode: "full"
+          description: "Full refresh of future rounds to catch date/time changes"
 
   calculateScores:
     handler: src/handlers/calculateScores.handler
     reservedConcurrency: 1  # Förhindra parallella körningar som kan orsaka dubbletter
     events:
-      - schedule:
-          rate: rate(1 hour)
-          enabled: true
-          description: "Calculate points for unscored predictions"
+      - eventBridge:
+          eventBus: allsvenskan-prediction-bus
+          pattern:
+            source:
+              - "allsvenskan.matches"
+            detail-type:
+              - "MatchesUpdated"
 
   # --- Event-driven ---
   logPrediction:
