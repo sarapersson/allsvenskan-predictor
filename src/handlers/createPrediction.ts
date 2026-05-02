@@ -79,6 +79,16 @@ export const handler = async (event: any) => {
       };
     }
 
+    // Validera att matchId är en rimlig sträng
+    if (typeof matchId !== "string" || matchId.length === 0 || matchId.length > 50) {
+      console.warn("⚠️ Denied: Invalid matchId", { matchId });
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ message: "matchId must be a string (max 50 characters)" }),
+      };
+    }
+
     // Validera att poängen är rimliga tal
     if (
       !Number.isInteger(predictedHome) || !Number.isInteger(predictedAway) ||
