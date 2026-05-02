@@ -1,6 +1,35 @@
 # Allsvenskan Predictor - TODO
 
-## Critical (Do Now)
+## Round 2 (completed)
+
+### Security
+
+- [x] Limit API_KEY env var to only the authorizer Lambda
+- [x] Fix hardcoded CORS `*` in handler responses
+- [x] Validate `matchId` as string with max length in createPrediction
+- [x] Use `crypto.timingSafeEqual` in authorizer
+
+### Bugs
+
+- [x] Fix createPrediction response shape mismatch in frontend
+
+### Config
+
+- [x] Add `.build/` to `.gitignore`
+- [x] Expand CloudWatch alarms to cover all critical Lambdas
+- [x] Create `.env.example` files (already existed, skipped)
+
+### Nice-to-haves
+
+- [x] Update README
+- [x] Remove empty `postman/` directory
+- [x] Add pull-to-refresh on match list
+
+---
+
+## Round 1 (completed)
+
+### Critical (Do Now)
 
 - [x] Rotate API key in AWS SSM (current key is exposed in Postman collection)
 - [x] Remove API key from `postman/Allsvenskan-Predictor.postman_collection.json`
