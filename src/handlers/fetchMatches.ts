@@ -229,7 +229,7 @@ export const handler = async (event?: { mode?: string }) => {
               {
                 Source: "allsvenskan.matches",
                 DetailType: "MatchesUpdated",
-                EventBusName: "allsvenskan-prediction-bus",
+                EventBusName: process.env.EVENT_BUS_NAME,
                 Detail: JSON.stringify({
                   finishedCount: finishedMatches.length,
                   totalCount: allMatches.length,

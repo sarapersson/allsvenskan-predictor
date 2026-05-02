@@ -45,6 +45,7 @@ provider:
   environment:
     MATCHES_TABLE: ${self:service}-matches-${self:provider.stage}
     PREDICTIONS_TABLE: ${self:service}-predictions-${self:provider.stage}
+    EVENT_BUS_NAME: allsvenskan-prediction-bus
 
   iam:
     role:
