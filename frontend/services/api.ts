@@ -15,6 +15,7 @@ import { Match, Prediction } from "../types";
 // --- Konfiguration ---
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "";
 const API_KEY = process.env.EXPO_PUBLIC_API_KEY || "";
+const REQUEST_TIMEOUT_MS = 10000; // 10 sekunder
 
 // --- API Response-typer (hur backend faktiskt svarar) ---
 interface MatchesResponse {
@@ -48,14 +49,20 @@ const apiRequest = async <T>(
   }
 
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
     const res = await fetch(`${BASE_URL}${endpoint}`, {
       ...options,
+      signal: controller.signal,
       headers: {
         "x-api-key": API_KEY,
         "Content-Type": "application/json",
         ...options?.headers,
       },
     });
+
+    clearTimeout(timeout);
 
     if (!res.ok) {
       const errorBody = await res.text();
@@ -72,6 +79,10 @@ const apiRequest = async <T>(
     console.log(`✅ API ${method} ${endpoint} succeeded`);
     return data as T;
   } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      console.error(`❌ Timeout: ${endpoint} svarade inte inom ${REQUEST_TIMEOUT_MS}ms`);
+      throw new Error("Servern svarade inte i tid. Försök igen.");
+    }
     if (error instanceof TypeError && error.message === "Network request failed") {
       console.error(`❌ Nätverksfel: Kunde inte nå ${BASE_URL}${endpoint}`);
       throw new Error(
