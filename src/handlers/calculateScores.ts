@@ -123,20 +123,29 @@ export const handler = async () => {
         const points = calculatePoints(prediction, match);
 
         // Uppdatera tipset med poäng och markera som beräknat
+        // ConditionExpression förhindrar att samma tips poängsätts två gånger
+        // vid samtidiga körningar (race condition-skydd)
         await docClient.send(
           new UpdateCommand({
             TableName: process.env.PREDICTIONS_TABLE,
             Key: { predictionId: prediction.predictionId },
             UpdateExpression: "SET points = :points, scored = :scored",
+            ConditionExpression: "scored = :notScored",
             ExpressionAttributeValues: {
               ":points": points,
               ":scored": true,
+              ":notScored": false,
             },
           })
         );
 
         updated++;
-      } catch (updateError) {
+      } catch (updateError: any) {
+        if (updateError.name === "ConditionalCheckFailedException") {
+          // Redan poängsatt av en annan körning – hoppa över
+          skipped++;
+          continue;
+        }
         console.error(`❌ Failed to score prediction ${prediction.predictionId}:`, updateError);
         errors++;
       }
