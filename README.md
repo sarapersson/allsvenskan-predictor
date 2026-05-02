@@ -36,13 +36,18 @@ EVENT-DRIVEN (EventBridge Bus)
 | GET | /predictions | Hämta användarens tips | API-key |
 | POST | /predictions | Skicka in ett tips | API-key |
 
+## ⏰ Schemalagda funktioner
+
+| Funktion | Trigger | Beskrivning |
+|----------|---------|-------------|
+| fetchMatches | EventBridge Schedule (var 2:a timme + dagligen) | Hämtar matchdata från TheSportsDB, smart fetch av omgångar som behöver uppdateras |
+
 ## ⚡ Event-driven funktioner
 
 | Funktion | Trigger | Beskrivning |
 |----------|---------|-------------|
-| fetchMatches | EventBridge (var 2:a timme + dagligen) | Hämtar matchdata från TheSportsDB, smart fetch av omgångar som behöver uppdateras |
-| calculateScores | EventBridge (MatchesUpdated-event) | Beräknar poäng för alla tips baserat på faktiska resultat |
-| logPrediction | EventBridge (PredictionCreated-event) | Loggar varje tips som skapas |
+| calculateScores | EventBridge Bus (MatchesUpdated-event) | Beräknar poäng för alla tips baserat på faktiska resultat |
+| logPrediction | EventBridge Bus (PredictionCreated-event) | Loggar varje tips som skapas |
 
 ## 🏆 Poängsystem
 
