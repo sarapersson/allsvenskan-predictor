@@ -14,7 +14,7 @@
 
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { docClient } from "../utils/dynamodb";
-import { ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { ScanCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { Match } from "../types";
 
 // CORS-headers som krävs för frontend-anrop
@@ -42,24 +42,40 @@ export const handler = async (
   }
 
   try {
-    // Hämta ALLA matcher med paginering (DynamoDB returnerar max 1 MB per Scan)
-    const allMatches: Match[] = [];
-    let lastEvaluatedKey: Record<string, any> | undefined;
+    const round = event.queryStringParameters?.round;
 
-    do {
+    let allMatches: Match[];
+
+    if (round) {
+      // Hämta specifik omgång via GSI (effektivare än scan)
       const result = await docClient.send(
-        new ScanCommand({
+        new QueryCommand({
           TableName: process.env.MATCHES_TABLE,
-          ExclusiveStartKey: lastEvaluatedKey,
+          IndexName: "round-date-index",
+          KeyConditionExpression: "#r = :round",
+          ExpressionAttributeNames: { "#r": "round" },
+          ExpressionAttributeValues: { ":round": round },
         })
       );
+      allMatches = (result.Items || []) as Match[];
+    } else {
+      // Hämta ALLA matcher med paginering (DynamoDB returnerar max 1 MB per Scan)
+      allMatches = [];
+      let lastEvaluatedKey: Record<string, any> | undefined;
 
-      const items = (result.Items || []) as Match[];
-      allMatches.push(...items);
+      do {
+        const result = await docClient.send(
+          new ScanCommand({
+            TableName: process.env.MATCHES_TABLE,
+            ExclusiveStartKey: lastEvaluatedKey,
+          })
+        );
 
-      // Om LastEvaluatedKey finns betyder det att det finns mer data att hämta
-      lastEvaluatedKey = result.LastEvaluatedKey;
-    } while (lastEvaluatedKey);
+        const items = (result.Items || []) as Match[];
+        allMatches.push(...items);
+        lastEvaluatedKey = result.LastEvaluatedKey;
+      } while (lastEvaluatedKey);
+    }
 
     // Sortera matcher efter datum (äldst först)
     const sortedMatches = allMatches.sort((a, b) => {

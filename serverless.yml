@@ -61,6 +61,7 @@ provider:
             - dynamodb:UpdateItem
           Resource:
             - !GetAtt MatchesTable.Arn
+            - !Join ["/", [!GetAtt MatchesTable.Arn, "index/*"]]
             - !GetAtt PredictionsTable.Arn
             - !Join ["/", [!GetAtt PredictionsTable.Arn, "index/*"]]
         # EventBridge-åtkomst (begränsad till vår bus)
@@ -175,9 +176,22 @@ resources:
         AttributeDefinitions:
           - AttributeName: matchId
             AttributeType: S
+          - AttributeName: round
+            AttributeType: S
+          - AttributeName: date
+            AttributeType: S
         KeySchema:
           - AttributeName: matchId
             KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: round-date-index
+            KeySchema:
+              - AttributeName: round
+                KeyType: HASH
+              - AttributeName: date
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
         BillingMode: PAY_PER_REQUEST
         PointInTimeRecoverySpecification:
           PointInTimeRecoveryEnabled: true
