@@ -123,9 +123,11 @@ export default function Home() {
 
   const handleInputChange = useCallback(
     (matchId: string, field: "home" | "away", value: string) => {
+      // Tillåt bara siffror, max 99 (matchar backend-validering)
+      const cleaned = value.replace(/[^0-9]/g, "").slice(0, 2);
       setInputs((prev) => ({
         ...prev,
-        [matchId]: { ...prev[matchId], home: prev[matchId]?.home || "", away: prev[matchId]?.away || "", [field]: value },
+        [matchId]: { ...prev[matchId], home: prev[matchId]?.home || "", away: prev[matchId]?.away || "", [field]: cleaned },
       }));
     },
     []
