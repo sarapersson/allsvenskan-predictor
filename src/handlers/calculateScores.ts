@@ -20,7 +20,7 @@ import { Match, Prediction } from "../types";
  * Bestämmer utgången av en match baserat på mål
  * @returns "home" (hemmaseger), "away" (bortaseger), eller "draw" (oavgjort)
  */
-const getOutcome = (home: number, away: number): string => {
+export const getOutcome = (home: number, away: number): string => {
   if (home > away) return "home";
   if (away > home) return "away";
   return "draw";
@@ -30,7 +30,7 @@ const getOutcome = (home: number, away: number): string => {
  * Beräknar poäng för ett enskilt tips jämfört med matchresultatet
  * @returns 3 (exakt rätt), 1 (rätt utgång), eller 0 (fel)
  */
-const calculatePoints = (prediction: Prediction, match: Match): number => {
+export const calculatePoints = (prediction: Prediction, match: Match): number => {
   // Matchen saknar resultat - kan inte beräkna
   if (match.homeScore === null || match.awayScore === null) return 0;
 

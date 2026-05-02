@@ -48,7 +48,7 @@ async function fetchWithRetry(url: string, retries = MAX_RETRIES): Promise<Respo
 }
 
 // Hjälpfunktion: säker parseInt som returnerar null vid ogiltiga värden
-function safeParseScore(value: string | null | undefined): number | null {
+export function safeParseScore(value: string | null | undefined): number | null {
   if (value == null) return null;
   const parsed = parseInt(value, 10);
   return Number.isNaN(parsed) ? null : parsed;
